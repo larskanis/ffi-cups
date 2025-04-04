@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.license     = "MIT"
   s.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
-  s.add_runtime_dependency "ffi", "~> 1.15.0"
+  s.add_runtime_dependency "ffi", "~> 1.15"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
