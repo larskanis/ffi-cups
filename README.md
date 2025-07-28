@@ -19,18 +19,34 @@ require 'ffi-cups'
 
 printers = Cups::Printer.get_destinations
 # [#<Cups::Printer:0x000055fe50b15798 @name="Virtual_PDF_Printer",
-#  @options={"copies"=>"1", "device-uri"=>"cups-pdf:/", "finishings"=>"3" 
+#  @options={"copies"=>"1", "device-uri"=>"cups-pdf:/", "finishings"=>"3"
 #  "job-cancel-after"=>"10800", "job-hold-until"=>"no-hold", ...
 
 printer = Cups::Printer.get_destination("Virtual_PDF_Printer")
-# <Cups::Printer:0x0000560f1d4e0958 @name="Virtual_PDF_Printer", @options={"copies"=>"1" 
+# <Cups::Printer:0x0000560f1d4e0958 @name="Virtual_PDF_Printer", @options={"copies"=>"1"
 #   "device-uri"=>"cups-pdf:/", ...
 
 printer.state
-# :idle 
+# :idle
 
 printer.state_reasons
 # ["none"]
+
+printer.find_dest_supported
+# {type: :ipp_tag_keyword,
+#  values:
+#   ["copies",
+# ...
+#    "print-scaling",
+#    "printer-resolution",
+#    "sides"]}
+
+printer.find_dest_supported("copies")
+# {type: :ipp_tag_range, values: [{lowervalue: 1, uppervalue: 9999}]}
+
+printer.find_dest_supported("sides")
+# {type: :ipp_tag_keyword, values: ["one-sided", "two-sided-long-edge", "two-sided-short-edge"]}
+
 
 # Print a file (PDF, JPG, etc) you can pass a hash of printing options if you
 # want to override the printer's default. See Cups::Constants for more options
@@ -40,7 +56,7 @@ options = {
 }
 
 job = printer.print_file('/tmp/example.jpg', 'Title', options)
-# <Cups::Job:0x000055c87104d1e0 @id=10, @title="README", @printer="Virtual_PDF_Printer", @format="text/plain", @state=:processing, @size=4, @completed_time=1969-12-31 18:00:00 -0600, @creation_time=2021-04-18 17:35:04 -0500, @processing_time=2021-04-18 17:35:04 -0500> 
+# <Cups::Job:0x000055c87104d1e0 @id=10, @title="README", @printer="Virtual_PDF_Printer", @format="text/plain", @state=:processing, @size=4, @completed_time=1969-12-31 18:00:00 -0600, @creation_time=2021-04-18 17:35:04 -0500, @processing_time=2021-04-18 17:35:04 -0500>
 
 # Get all jobs from a printer
 jobs = Cups::Job.get_jobs('Virtual_PDF_Printer')

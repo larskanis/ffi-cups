@@ -4,7 +4,7 @@
 
 module Cups
   extend FFI::Library
-  
+
   ffi_lib(Cups.libcups)
 
   # Get the current encryption settings.
@@ -22,6 +22,16 @@ module Cups
   #   @return [Integer] 1 if supported, 0 otherwise
   # {https://www.cups.org/doc/cupspm.html#cupsCheckDestSupported}
   attach_function 'cupsCheckDestSupported', [:pointer, :pointer, :pointer, :string, :string], :int, blocking: true
+
+  # Check that the option and value are supported by the destination.
+  # @overload cupsFindDestSupported(pointer, pointer, pointer, string)
+  #   @param http [Pointer]
+  #   @param destination [Pointer]
+  #   @param dinfo [Pointer]
+  #   @param option [String]
+  #   @return [p_ipp_attribute_t] opaque pointer to an IPP attribute
+  # {https://www.cups.org/doc/cupspm.html#cupsFindDestSupported}
+  attach_function 'cupsFindDestSupported', [:pointer, :pointer, :pointer, :string], Struct::IppAttribute.by_ref, blocking: true
 
   # Get the supported values/capabilities for the destination.
   # @overload cupsCopyDestInfo(pointer, pointer)
@@ -65,7 +75,7 @@ module Cups
   #   @param pointer [Pointer] to a CupsOptionS struct
   #   @return [Integer] job number or 0 on error
   attach_function 'cupsPrintFile', [ :string, :string, :string, :int, :pointer ], :int, blocking: true
-  
+
   # Prints a file from a specific connection
   # @overload cupsPrintFile2(pointer, string, string, string, int, pointer)
   #   @param pointer [Pointer] to an http connection
