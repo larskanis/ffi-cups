@@ -29,44 +29,100 @@ module Cups
 
     def print_file(filename, title, options={})
       raise "File not found: #{filename}" unless File.exist? filename
-      
+
       http = @connection.nil? ? nil : @connection.httpConnect2
+      job = with_destination(http) do |dest|
+        p_options = nil
+        num_options = 0
+        unless options.empty?
+          p_options = FFI::MemoryPointer.new :pointer
+          options.each do |k, v|
+            unless self.class.cupsCheckDestSupported(dest.to_ptr, k, v, http)
+              raise "Option:#{k} #{v if v} not supported for printer: #{@name}"
+            end
+            num_options = Cups.cupsAddOption(k, v, num_options, p_options)
+          end
+          p_options = p_options.get_pointer(0)
+        end
+
+        job_id = Cups.cupsPrintFile2(http, @name, filename, title, num_options, p_options)
+
+        if job_id.zero?
+          last_error = Cups.cupsLastErrorString()
+          self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
+          raise last_error
+        end
+        #job = Cups::Job.new(job_id, title, @name)
+        job = Cups::Job.get_job(job_id, @name, 0, @connection)
+
+        self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
+        job
+      end
+      Cups::Connection.close(http)
+      return job
+    end
+
+    private def with_destination(http, &block)
+      self.class.with_destination(http, @name, &block)
+    end
+
+    def self.with_destination(http, name)
       # Get all destinations with cupsGetDests2
       dests = FFI::MemoryPointer.new :pointer
       num_dests = Cups.cupsGetDests2(http, dests)
 
       # Get the destination from name with cupsGetDest
-      p_dest = Cups.cupsGetDest(@name, nil, num_dests, dests.get_pointer(0))
+      p_dest = Cups.cupsGetDest(name, nil, num_dests, dests.get_pointer(0))
       dest = Cups::Struct::Destination.new(p_dest)
-      raise "Destination with name: #{@name} not found!" if dest.null?
+      raise "Destination with name: #{name} not found!" if dest.null?
+      yield dest
+    ensure
+      Cups.cupsFreeDests(num_dests, dests.get_pointer(0))
+    end
 
-      p_options = nil
-      num_options = 0
-      unless options.empty?
-        p_options = FFI::MemoryPointer.new :pointer
-        options.each do |k, v|
-          unless self.class.cupsCheckDestSupported(p_dest, k, v, http)
-            raise "Option:#{k} #{v if v} not supported for printer: #{@name}" 
+    class IppGetResolutionParams < FFI::Struct
+      layout yres: :int, :units => Enum::IPP::Res
+    end
+    private_constant :IppGetResolutionParams
+
+    # Find the supported value(s) for the given option.
+    #
+    # If no option is given then the available options are returned.
+    #
+    # @return [Hash, nil] hash with keys :type and :values or nil when option is not supported
+    def find_dest_supported(option = "job-creation-attributes")
+      http = @connection.nil? ? nil : @connection.httpConnect2
+      with_destination(http) do |dest|
+        attr = self.class.cupsFindDestSupported(dest.to_ptr,
+                            option, http);
+        return nil if attr.null?
+
+        count = IppAttibute.ippGetCount(attr)
+        type = IppAttibute.ippGetValueTag(attr)
+        values = count.times.map do |idx|
+          case type
+          when :ipp_tag_resolution then
+            params = IppGetResolutionParams.new
+            xres = IppAttibute.ippGetResolution(attr, idx, params.to_ptr + params.offset_of(:yres), params.to_ptr + params.offset_of(:units))
+            if xres != 0
+              {xres: xres, yres: params[:yres], units: params[:units]}
+            end
+          when :ipp_tag_range then
+            p_uppervalue = FFI::MemoryPointer.new :int
+            low = IppAttibute.ippGetRange(attr, idx, p_uppervalue)
+            if low != 0
+              {lowervalue: low, uppervalue: p_uppervalue.read_int}
+            end
+          when :ipp_tag_enum then
+            int = IppAttibute.ippGetInteger(attr, idx)
+            name = IppAttibute.ippEnumString(option, int)
+            {int: int, name: name}
+          else
+            IppAttibute.ippGetString(attr, idx, nil) || IppAttibute.ippGetInteger(attr, idx)
           end
-          num_options = Cups.cupsAddOption(k, v, num_options, p_options)
         end
-        p_options = p_options.get_pointer(0)
+        { type: type, values: values}
       end
-
-      job_id = Cups.cupsPrintFile2(http, @name, filename, title, num_options, p_options)
-
-      if job_id.zero?
-        last_error = Cups.cupsLastErrorString()
-        self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
-        raise last_error
-      end
-      #job = Cups::Job.new(job_id, title, @name)
-      job = Cups::Job.get_job(job_id, @name, 0, @connection)
-
-      self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
-      self.class.cupsFreeDests(num_dests, dests)
-      Cups::Connection.close(http)
-      return job
     end
 
     # Get all destinations (printer devices)
@@ -89,17 +145,9 @@ module Cups
     # @return [Printer] a printer object
     def self.get_destination(name, connection=nil)
       http = connection.nil? ? nil : connection.httpConnect2
-      # Get all destinations with cupsGetDests2
-      dests = FFI::MemoryPointer.new :pointer
-      num_dests = Cups.cupsGetDests2(http, dests)
-
-      # Get the destination from name with cupsGetDest
-      p_dest = Cups.cupsGetDest(name, nil, num_dests, dests.get_pointer(0))
-      dest = Cups::Struct::Destination.new(p_dest)
-      raise "Destination with name: #{name} not found!" if dest.null?
-
-      printer = Cups::Printer.new(dest[:name].dup, printer_options(dest), connection)
-      cupsFreeDests(num_dests, dests)
+      printer = with_destination(http, name) do |dest|
+        Cups::Printer.new(dest[:name].dup, printer_options(dest), connection)
+      end
       Cups::Connection.close(http) if http
       return printer
     end
@@ -132,6 +180,11 @@ module Cups
       info = Cups.cupsCopyDestInfo(connection, dest)
       i = Cups.cupsCheckDestSupported(connection, dest, info, option, value)
       return !i.zero?
+    end
+
+    def self.cupsFindDestSupported(dest, option, connection=nil)
+      info = Cups.cupsCopyDestInfo(connection, dest)
+      Cups.cupsFindDestSupported(connection, dest, info, option)
     end
 
     # Returns a destination's options
