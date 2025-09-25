@@ -37,9 +37,10 @@ module Cups
         unless options.empty?
           p_options = FFI::MemoryPointer.new :pointer
           options.each do |k, v|
-            unless self.class.cupsCheckDestSupported(dest.to_ptr, k, v, http)
-              raise "Option:#{k} #{v if v} not supported for printer: #{@name}"
-            end
+            # Do not raise invalid options, since cupsCheckDestSupported states valid PPD options as unsupported.
+            # unless self.class.cupsCheckDestSupported(dest.to_ptr, k, v, http)
+              # raise "Option:#{k} #{v if v} not supported for printer: #{@name}"
+            #end
             num_options = Cups.cupsAddOption(k, v, num_options, p_options)
           end
           p_options = p_options.get_pointer(0)
