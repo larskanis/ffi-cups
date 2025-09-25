@@ -18,6 +18,14 @@ module Cups
     attach_function 'ippGetString', [Struct::IppAttribute.by_ref, :int, :pointer], :string, blocking: true
     attach_function 'ippGetInteger', [Struct::IppAttribute.by_ref, :int], :int, blocking: true
 
+    # Get the attribute name.
+    #
+    # const char *ippGetName(ipp_attribute_t *attr);
+    # Parameters:
+    #   attr 	IPP attribute
+    # Return Value: Attribute name or NULL for separators
+    attach_function 'ippGetName', [Struct::IppAttribute.by_ref], :string, blocking: true
+
     #     Get a resolution value for an attribute.
     #
     # int ippGetResolution(ipp_attribute_t *attr, int element, int *yres, ipp_res_t *units);

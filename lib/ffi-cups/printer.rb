@@ -98,6 +98,7 @@ module Cups
         return nil if attr.null?
 
         count = IppAttibute.ippGetCount(attr)
+        name = IppAttibute.ippGetName(attr)
         type = IppAttibute.ippGetValueTag(attr)
         values = count.times.map do |idx|
           case type
@@ -121,7 +122,7 @@ module Cups
             IppAttibute.ippGetString(attr, idx, nil) || IppAttibute.ippGetInteger(attr, idx)
           end
         end
-        { type: type, values: values}
+        { type: type, values: values, name: name }
       end
     end
 
