@@ -33,6 +33,16 @@ module Cups
   # {https://www.cups.org/doc/cupspm.html#cupsFindDestSupported}
   attach_function 'cupsFindDestSupported', [:pointer, :pointer, :pointer, :string], Struct::IppAttribute.by_ref, blocking: true
 
+  # Check that the option and value are supported by the destination.
+  # @overload cupsFindDestReady(pointer, pointer, pointer, string)
+  #   @param http [Pointer]
+  #   @param destination [Pointer]
+  #   @param dinfo [Pointer]
+  #   @param option [String]
+  #   @return [p_ipp_attribute_t] opaque pointer to an IPP attribute
+  # {https://www.cups.org/doc/cupspm.html#cupsFindDestReady}
+  attach_function 'cupsFindDestReady', [:pointer, :pointer, :pointer, :string], Struct::IppAttribute.by_ref, blocking: true
+
   # Get the supported values/capabilities for the destination.
   # @overload cupsCopyDestInfo(pointer, pointer)
   #   @param http [Pointer]
