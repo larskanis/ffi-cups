@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.summary     = "FFI wrapper around libcups"
   s.description = "Simple wrapper around libcups to give CUPS printing capabilities to Ruby apps."
   s.license     = "MIT"
+  s.metadata['allowed_push_host'] = "https://ccgems"
   s.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
   s.add_runtime_dependency "ffi", "~> 1.15"
