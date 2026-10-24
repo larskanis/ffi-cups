@@ -204,4 +204,13 @@ module Cups
   #   @param pointer [Pointer] to options
   # {https://www.cups.org/doc/cupspm.html#cupsFreeOptions}
   attach_function 'cupsFreeOptions', [:int, :pointer], :void, blocking: true
+
+  # Get the destination profile matching the given printer name string.
+  #
+  # @param http [FFI::Pointer] Connection token handle, or NULL to utilize default standard behaviors.
+  # @param name [String] The explicit destination name string targeting verification.
+  # @param instance [String, nil] The specific profile instance context name, or nil for standard configurations.
+  # @return [FFI::Pointer] Explicit pointer targeting a filled out `cups_dest_t` entry structure block, or NULL.
+  attach_function :cupsGetNamedDest, [:pointer, :string, :string], :pointer
+
 end

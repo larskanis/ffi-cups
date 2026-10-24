@@ -18,6 +18,8 @@ require 'ffi-cups/constants'
 
 # Enums
 require 'ffi-cups/enum/http/status'
+require 'ffi-cups/enum/http/ppd'
+
 # IPP
 require 'ffi-cups/enum/ipp/status'
 require 'ffi-cups/enum/ipp/job_state'
@@ -29,12 +31,15 @@ require 'ffi-cups/struct/option'
 require 'ffi-cups/struct/destination'
 require 'ffi-cups/struct/job'
 require 'ffi-cups/struct/ipp_attribute'
+require 'ffi-cups/struct/ppd_choice'
+require 'ffi-cups/struct/ppd_option'
 
 # Functions
 require 'ffi-cups/ffi/cups'
 require 'ffi-cups/ffi/http'
 require 'ffi-cups/ffi/array'
 require 'ffi-cups/ffi/ipp_attribute'
+require 'ffi-cups/ffi/ppd'
 
 # wrappers
 require 'ffi-cups/connection'

@@ -155,6 +155,60 @@ module Cups
       return printer
     end
 
+    def ppd_options
+      ppd_path = Cups::Ppd.cupsGetPPD(name)
+      if ppd_path.nil? || ppd_path.empty?
+        raise "Error: Could not retrieve PPD for printer '#{name}'"
+      end
+
+      ppd_ptr = Cups::Ppd.ppdOpenFile(ppd_path)
+      if ppd_ptr.null?
+        raise "Error: Failed to open PPD file at #{ppd_path}"
+      end
+
+      # Let CUPS evaluate current printer system runtime option defaults
+      # Cups::Ppd.cupsMarkOptions(ppd_ptr, 0, nil)
+
+      options = []
+
+      opt_ptr = Cups::Ppd.ppdFirstOption(ppd_ptr)
+
+      while !opt_ptr.null?
+        option = Cups::Struct::PpdOption.new(opt_ptr)
+        choices_array = []
+
+        # Safe pointer stepping through contiguous C memory slots of choice definitions
+        option[:num_choices].times do |c_idx|
+          choice_stride = Cups::Struct::PpdChoice.size
+          choice_element_ptr = option[:choices] + (c_idx * choice_stride)
+          choice = Cups::Struct::PpdChoice.new(choice_element_ptr)
+
+          choices_array << {
+            choice: choice[:choice].to_s,
+            marked: choice[:marked] != 0,
+          }
+        end
+
+        options << {
+          keyword: option[:keyword].to_s,
+          text: option[:text].to_s,
+          choices: choices_array,
+          defchoice: option[:defchoice].to_s,
+          ui: option[:ui],
+          section: option[:section],
+        }
+
+        opt_ptr = Cups::Ppd.ppdNextOption(ppd_ptr)
+      end
+
+      options
+    ensure
+      if ppd_ptr && !ppd_ptr.null?
+        Cups::Ppd.ppdClose(ppd_ptr)
+      end
+      File.delete(ppd_path) if ppd_path && File.exist?(ppd_path)
+    end
+
     private
     # Wrapper around {::Cups#cupsGetDests2}
     # @param connection [Pointer] http pointer from {Cups::Connection#httpConnect2}

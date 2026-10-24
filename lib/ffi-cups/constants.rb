@@ -92,4 +92,7 @@ module Cups
   SIDES_ONE_SIDED		        = "one-sided"
   SIDES_TWO_SIDED_PORTRAIT	  = "two-sided-long-edge"
   SIDES_TWO_SIDED_LANDSCAPE  = "two-sided-short-edge"
+
+  PPD_MAX_NAME = 41
+  PPD_MAX_TEXT = 81
 end
