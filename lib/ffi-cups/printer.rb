@@ -1,11 +1,12 @@
 module Cups
   class Printer
-    attr_reader :name, :options, :connection
+    attr_reader :name, :is_default, :options, :connection
 
     # @param name [String] printer's name
     # @param options [Hash] printer's options
-    def initialize(name, options={}, connection=nil)
+    def initialize(name, is_default=nil, options={}, connection=nil)
       @name = name
+      @is_default = is_default
       @options = options
       @connection = connection
     end
@@ -134,7 +135,7 @@ module Cups
       dests = cupsGetDests2(pointer, connection)
       printers = []
       dests.each do |d|
-        printer = Cups::Printer.new(d[:name].dup, printer_options(d), connection)
+        printer = Cups::Printer.new(d[:name].dup, d[:is_default]!=0, printer_options(d), connection)
         printers.push(printer)
       end
       cupsFreeDests(dests.count, pointer)
@@ -148,7 +149,7 @@ module Cups
     def self.get_destination(name, connection=nil)
       http = connection.nil? ? nil : connection.httpConnect2
       printer = with_destination(http, name) do |dest|
-        Cups::Printer.new(dest[:name].dup, printer_options(dest), connection)
+        Cups::Printer.new(dest[:name].dup, d[:is_default]!=0, printer_options(dest), connection)
       end
       Cups::Connection.close(http) if http
       return printer
