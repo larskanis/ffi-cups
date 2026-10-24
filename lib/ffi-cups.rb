@@ -7,7 +7,7 @@ module Cups
     if ENV['CUPS_LIB']
       ENV['CUPS_LIB']
     else
-      'cups'
+      FFI::LibraryPath.new('cups', abi_number: 2)
     end
   end
 
