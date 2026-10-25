@@ -155,6 +155,12 @@ module Cups
       return printer
     end
 
+    # Get all possible options of the PPD file of the printer.
+    #
+    # These options can be passed to {print_file}.
+    # CUPS's PPD functions are deprecated, but many PPD based printers can be controlled only by PPD options, instead of IPP options.
+    #
+    # @return [Array<Hash>]  List of accepted options and their attributes.
     def ppd_options
       ppd_path = Cups::Ppd.cupsGetPPD(name)
       if ppd_path.nil? || ppd_path.empty?
