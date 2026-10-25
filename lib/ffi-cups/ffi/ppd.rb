@@ -3,6 +3,7 @@ module Cups
     extend FFI::Library
     
     ffi_lib(Cups.libcups)
+    typedef Struct::PpdFile.by_ref, :ppd_file_t
 
     # @note This function is deprecated and will be removed in a future release of CUPS.
     # Get the PPD file for a printer from the default server.
@@ -21,7 +22,7 @@ module Cups
     # @param filename [String] Local filesystem path layout matching target file boundaries.
     # @return [FFI::Pointer] Opaque pointer handle to a newly allocated `ppd_file_t` structure, or NULL if it fails.
     # @see https://www.cups.org/doc/api-ppd.html CUPS PPD API Reference
-    attach_function :ppdOpenFile, [:string], :pointer
+    attach_function :ppdOpenFile, [:string], :ppd_file_t
 
     # @note This function is deprecated and will be removed in a future release of CUPS.
     # Mark command-line options in a PPD file structure context.
@@ -32,7 +33,7 @@ module Cups
     # @param options [FFI::Pointer] Underlying pointer referencing a flat array of `cups_option_t` values.
     # @return [Integer] Returns 1 if conflicting printer options are uncovered, 0 if mapping succeeds completely.
     # @see https://refspecs.linuxfoundation.org/LSB_3.2.0/LSB-Printing/LSB-Printing/libcups.cupsmarkoptions.1.html Linux API Reference
-    attach_function :cupsMarkOptions, [:pointer, :int, :pointer], :int
+    attach_function :cupsMarkOptions, [:ppd_file_t, :int, :pointer], :int
 
     # @note This function is deprecated and will be removed in a future release of CUPS.
     # Free all memory space allocations consumed by a loaded PPD file descriptor layout.
@@ -41,7 +42,7 @@ module Cups
     # @param ppd [FFI::Pointer] The parsed `ppd_file_t` structure reference pointer returned via `ppdOpenFile`.
     # @return [void]
     # @see https://www.cups.org/doc/api-ppd.html CUPS PPD API Reference
-    attach_function :ppdClose, [:pointer], :void
+    attach_function :ppdClose, [:ppd_file_t], :void
 
     # @note This function is deprecated and will be removed in a future release of CUPS.
     # Return the very first structured option tracking entry recorded inside the loaded PPD file.
@@ -50,7 +51,7 @@ module Cups
     # @param ppd [FFI::Pointer] The parsed `ppd_file_t` structure memory context.
     # @return [FFI::Pointer] A structural pointer highlighting the first `ppd_option_t` allocation, or NULL if empty.
     # @see https://www.cups.org/doc/api-ppd.html CUPS PPD API Reference
-    attach_function :ppdFirstOption, [:pointer], :pointer
+    attach_function :ppdFirstOption, [:ppd_file_t], :pointer
 
     # @note This function is deprecated and will be removed in a future release of CUPS.
     # Return the next recorded option tracking layout context inside the active linear traversal loop.
@@ -59,6 +60,6 @@ module Cups
     # @param ppd [FFI::Pointer] The parsed `ppd_file_t` structure memory context.
     # @return [FFI::Pointer] A structural pointer highlighting the next concurrent `ppd_option_t`, or NULL when finalized.
     # @see https://www.cups.org/doc/api-ppd.html CUPS PPD API Reference
-    attach_function :ppdNextOption, [:pointer], :pointer
+    attach_function :ppdNextOption, [:ppd_file_t], :pointer
   end
 end

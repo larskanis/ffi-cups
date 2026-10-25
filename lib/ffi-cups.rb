@@ -32,6 +32,7 @@ require 'ffi-cups/struct/destination'
 require 'ffi-cups/struct/job'
 require 'ffi-cups/struct/ipp_attribute'
 require 'ffi-cups/struct/ppd_choice'
+require 'ffi-cups/struct/ppd_file'
 require 'ffi-cups/struct/ppd_option'
 
 # Functions
