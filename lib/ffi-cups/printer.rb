@@ -28,11 +28,16 @@ module Cups
       options['printer-state-reasons'].split(/,/)
     end
 
+    # Print a file (pdf, jpg, ps, etc.).
+    #
+    # You can pass in a hash of printing options if you want to override the printer's defaults.
+    #
+    # @return [Cups::Job]  can be used to check on the job status.
     def print_file(filename, title, options={})
       raise "File not found: #{filename}" unless File.exist? filename
 
       http = @connection.nil? ? nil : @connection.httpConnect2
-      job = with_destination(http) do |dest|
+      with_destination(http) do |dest|
         p_options = nil
         num_options = 0
         unless options.empty?
@@ -49,19 +54,63 @@ module Cups
 
         job_id = Cups.cupsPrintFile2(http, @name, filename, title, num_options, p_options)
 
-        if job_id.zero?
-          last_error = Cups.cupsLastErrorString()
-          self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
-          raise last_error
+        if job_id == 0
+          raise Cups.cupsLastErrorString()
         end
-        #job = Cups::Job.new(job_id, title, @name)
-        job = Cups::Job.get_job(job_id, @name, 0, @connection)
-
-        self.class.cupsFreeOptions(num_options, p_options) unless options.empty?
-        job
+        #Cups::Job.new(job_id, title, @name)
+        Cups::Job.get_job(job_id, @name, 0, @connection)
+      ensure
+        self.class.cupsFreeOptions(num_options, p_options) if p_options
       end
-      Cups::Connection.close(http)
-      return job
+    ensure
+      Cups::Connection.close(http) if http
+    end
+
+    # Print a binary blob of data provided as a String.
+    #
+    # You must also specify the mime type.
+    # Like {print_file}, printing options are optional.
+    #
+    # @return [Cups::Job]  can be used to check on the job status.
+    def print_data(data, mime_type, title, options = {})
+      http = @connection.nil? ? nil : @connection.httpConnect2
+      with_destination(http) do |dest|
+        p_options = nil
+        num_options = 0
+        unless options.empty?
+          p_options = FFI::MemoryPointer.new :pointer
+          options.each do |k, v|
+            num_options = Cups.cupsAddOption(k, v, num_options, p_options)
+          end
+          p_options = p_options.get_pointer(0)
+        end
+
+        job_id = Cups.cupsCreateJob(http, @name, title, num_options, p_options)
+        if job_id == 0
+          raise CupsFFI::cupsLastErrorString()
+        end
+
+        # Copy the data into a char pointer to allow null bytes
+        data_pointer = FFI::MemoryPointer.new(:char, data.bytesize)
+        data_pointer.put_bytes(0, data)
+
+        http_status = Cups.cupsStartDocument(@connection, @name,
+                                                job_id, title, mime_type, 1)
+
+        http_status = Cups.cupsWriteRequestData(@connection, data_pointer, data.bytesize)
+
+        ipp_status = Cups.cupsFinishDocument(@connection, @name)
+
+        data_pointer.free
+
+        raise ipp_status.to_s unless ipp_status == :ipp_ok
+
+        Cups::Job.get_job(job_id, @name, 0, @connection)
+      ensure
+        self.class.cupsFreeOptions(num_options, p_options) if p_options
+      end
+    ensure
+      Cups::Connection.close(http) if http
     end
 
     private def with_destination(http, &block)
@@ -149,7 +198,7 @@ module Cups
     def self.get_destination(name, connection=nil)
       http = connection.nil? ? nil : connection.httpConnect2
       printer = with_destination(http, name) do |dest|
-        Cups::Printer.new(dest[:name].dup, d[:is_default]!=0, printer_options(dest), connection)
+        Cups::Printer.new(dest[:name].dup, dest[:is_default]!=0, printer_options(dest), connection)
       end
       Cups::Connection.close(http) if http
       return printer
