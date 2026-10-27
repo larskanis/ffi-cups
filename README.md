@@ -1,17 +1,18 @@
 # FFI-Cups
-[![Gem Version](https://badge.fury.io/rb/ffi-cups.svg)](https://badge.fury.io/rb/ffi-cups)
+[![Gem Version](https://badge.fury.io/rb/ffi-cups2.svg)](https://badge.fury.io/rb/ffi-cups2)
 
-ffi-cups is a FFI bindings for libcups providing access to the Cups API through Ruby.
+ffi-cups2 is a FFI bindings for libcups providing access to the Cups API through Ruby.
+It is compatible to ffi-cups, but the maintainer of ffi-cups is not reachable.
 
 CUPS is the standards-based, open source printing system developed by Apple Inc. for macOS® and other UNIX®-like operating systems. CUPS uses the Internet Printing Protocol (IPP) to support printing to local and network printers. - from http://www.cups.org/
 
 ## Installation
 ```bash
-gem install ffi-cups
+gem install ffi-cups2
 ```
 
 ## Setup & Requirements
-ffi-cups requires libcups2 to be installed
+ffi-cups2 requires libcups2 to be installed
 
 ## Example usage
 ```ruby
@@ -82,16 +83,13 @@ remote_printers = Cups::Printer.get_destinations(connection)
 ```
 
 ## Documentation
-Check out the documentation - [docs](https://www.rubydoc.info/gems/ffi-cups/0.2.1)
+Check out the documentation - [docs](https://www.rubydoc.info/gems/ffi-cups2)
 
 ## Authors
-- Hugo Marquez @ www.hugomarquez.mx
-- Contributors @ https://github.com/hugomarquez/ffi-cups/graphs/contributors
+- Contributors @ https://github.com/larskanis/ffi-cups/graphs/contributors
 
 ## License
 The MIT License
-
-Copyright (c) 2022 Hugo Marquez & Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
