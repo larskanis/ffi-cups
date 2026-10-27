@@ -34,7 +34,7 @@ module Cups
     #
     # @return [Cups::Job]  can be used to check on the job status.
     def print_file(filename, title, options={})
-      raise "File not found: #{filename}" unless File.exist? filename
+      raise FileNotFound, "File not found: #{filename}" unless File.exist? filename
 
       http = @connection.nil? ? nil : @connection.httpConnect2
       with_destination(http) do |dest|
@@ -55,7 +55,7 @@ module Cups
         job_id = Cups.cupsPrintFile2(http, @name, filename, title, num_options, p_options)
 
         if job_id == 0
-          raise Cups.cupsLastErrorString()
+          raise CupsError, Cups.cupsLastErrorString()
         end
         #Cups::Job.new(job_id, title, @name)
         Cups::Job.get_job(job_id, @name, 0, @connection)
@@ -87,7 +87,7 @@ module Cups
 
         job_id = Cups.cupsCreateJob(http, @name, title, num_options, p_options)
         if job_id == 0
-          raise CupsFFI::cupsLastErrorString()
+          raise CupsError, CupsFFI::cupsLastErrorString()
         end
 
         # Copy the data into a char pointer to allow null bytes
@@ -103,7 +103,7 @@ module Cups
 
         data_pointer.free
 
-        raise ipp_status.to_s unless ipp_status == :ipp_ok
+        raise CupsError, ipp_status.to_s unless ipp_status == :ipp_ok
 
         Cups::Job.get_job(job_id, @name, 0, @connection)
       ensure
@@ -125,7 +125,7 @@ module Cups
       # Get the destination from name with cupsGetDest
       p_dest = Cups.cupsGetDest(name, nil, num_dests, dests.get_pointer(0))
       dest = Cups::Struct::Destination.new(p_dest)
-      raise "Destination with name: #{name} not found!" if dest.null?
+      raise DestinationNotFound, "Destination with name: #{name} not found!" if dest.null?
       yield dest
     ensure
       Cups.cupsFreeDests(num_dests, dests.get_pointer(0))
@@ -213,12 +213,12 @@ module Cups
     def ppd_options
       ppd_path = Cups::Ppd.cupsGetPPD(name)
       if ppd_path.nil? || ppd_path.empty?
-        raise "Error: Could not retrieve PPD for printer '#{name}'"
+        raise CupsError, "Error: Could not retrieve PPD for printer '#{name}'"
       end
 
       ppd_ptr = Cups::Ppd.ppdOpenFile(ppd_path)
       if ppd_ptr.null?
-        raise "Error: Failed to open PPD file at #{ppd_path}"
+        raise CupsError, "Error: Failed to open PPD file at #{ppd_path}"
       end
 
       # Let CUPS evaluate current printer system runtime option defaults

@@ -1,6 +1,18 @@
 require 'ffi'
 
 module Cups
+  class Error < RuntimeError
+  end
+  class FileNotFound < Error
+  end
+  class JobNotFound < Error
+  end
+  class ConnectError < Error
+  end
+  class DestinationNotFound < Error
+  end
+  class CupsError < Error
+  end
 
   # Custom or default path for libcups.so
   def self.libcups

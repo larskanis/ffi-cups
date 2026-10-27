@@ -23,7 +23,7 @@ module Cups
     def cancel(purge=0, connection=nil)
       job = self.class.get_job(@id, @printer, -1, connection)
       r = Cups.cupsCancelJob2(connection, @printer, @id, purge)
-      raise Cups.cupsLastErrorString() if r == 0
+      raise CupsError, Cups.cupsLastErrorString() if r == 0
       return r
     end
 
@@ -60,7 +60,7 @@ module Cups
       jobs.each do |j|
         return j if j.id == id
       end
-      raise "Job with id: #{id} not found!"
+      raise JobNotFound, "Job with id: #{id} not found!"
     end
 
     private
@@ -75,7 +75,7 @@ module Cups
       num_jobs = Cups.cupsGetJobs2(http, pointer, name, 0, filter)
       size = Cups::Struct::Job.size
       jobs = []
-      
+
       num_jobs.times do |i|
         job = Cups::Struct::Job.new(pointer.get_pointer(0) + (size * i))
         jobs.push(job)
